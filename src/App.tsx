@@ -9,6 +9,7 @@ import {
   fetchSecureAccess,
   loginDemoUser,
   loginUser,
+  uploadImage,
   type AdminOverview,
   type LibraryItem,
   type MovieApiItem,
@@ -275,6 +276,7 @@ export default function App() {
   const [adminCredentials, setAdminCredentials] = useState({ email: '', password: '' });
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
   useEffect(() => {
     const checkHash = () => {
@@ -471,7 +473,10 @@ export default function App() {
       if (!title || !adminForm.description.trim()) {
         throw new Error('Shyiramo nibura izina rya filime n’ibisobanuro byayo.');
       }
-
+      let thumbnailUrl = adminForm.thumbnailUrl;
+      if (thumbnailFile) {
+        thumbnailUrl = await uploadImage(thumbnailFile, adminToken);
+      }
       const result = await createAdminMovie({
         token: adminToken,
         title,
@@ -482,7 +487,7 @@ export default function App() {
         duration: adminForm.duration,
         rentPrice: Number(adminForm.rentPrice || 0),
         buyPrice: Number(adminForm.buyPrice || 0),
-        thumbnailUrl: adminForm.thumbnailUrl,
+        thumbnailUrl: thumbnailUrl,
         trailerUrl: adminForm.trailerUrl,
         storageKey: adminForm.storageKey,
       });
@@ -490,6 +495,7 @@ export default function App() {
       await loadMovies();
       await refreshAdminStats(adminToken);
       setAdminForm(emptyAdminForm);
+      setThumbnailFile(null);
       setMessage(result.message || 'Filime yongewemo neza.');
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Kongeramo filime byanze.');
@@ -918,8 +924,32 @@ export default function App() {
                     className="readonly-field"
                     value={adminForm.thumbnailUrl}
                     onChange={(event) => setAdminForm((current) => ({ ...current, thumbnailUrl: event.target.value }))}
-                    placeholder="Thumbnail URL"
+                    placeholder="Thumbnail URL (or upload below)"
                   />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <label className="primary-btn small-btn" style={{ textAlign: 'center', cursor: 'pointer' }}>
+                      {thumbnailFile ? thumbnailFile.name : 'Choose Image from Device'}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        style={{ display: 'none' }}
+                        onChange={(event) => {
+                          const file = event.target.files?.[0] || null;
+                          setThumbnailFile(file);
+                          if (file) {
+                            setAdminForm((current) => ({ ...current, thumbnailUrl: '' }));
+                          }
+                        }}
+                      />
+                    </label>
+                    {thumbnailFile && (
+                      <img
+                        src={URL.createObjectURL(thumbnailFile)}
+                        alt="Preview"
+                        style={{ maxWidth: '100%', maxHeight: '150px', borderRadius: '8px', objectFit: 'cover' }}
+                      />
+                    )}
+                  </div>
                   <input
                     className="readonly-field"
                     value={adminForm.trailerUrl}

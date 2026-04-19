@@ -162,3 +162,22 @@ export async function createAdminMovie(payload: {
     body: JSON.stringify(body),
   });
 }
+
+export async function uploadImage(file: File, token: string): Promise<string> {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const response = await fetch(buildApiUrl('/api/admin/upload'), {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error((payload as { message?: string }).message || 'Upload failed');
+  }
+  return (payload as { url: string }).url;
+}
