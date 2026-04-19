@@ -523,11 +523,6 @@ export default function App() {
           <>
             <section
               className="hero-card rt-hero hero-banner"
-              style={heroMovie?.thumbnailUrl ? {
-                backgroundImage: `linear-gradient(90deg, rgba(10,12,18,0.95) 0%, rgba(10,12,18,0.78) 42%, rgba(10,12,18,0.35) 100%), url(${heroMovie.thumbnailUrl})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              } : undefined}
             >
               <div className="hero-text">
                 <span className="pill">Fresh picks for your home</span>
