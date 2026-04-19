@@ -274,6 +274,18 @@ export default function App() {
   const [adminForm, setAdminForm] = useState(emptyAdminForm);
   const [adminCredentials, setAdminCredentials] = useState({ email: '', password: '' });
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+
+  useEffect(() => {
+    const checkHash = () => {
+      if (window.location.hash === '#/admin') {
+        setShowAdminLogin(true);
+      }
+    };
+    checkHash();
+    window.addEventListener('hashchange', checkHash);
+    return () => window.removeEventListener('hashchange', checkHash);
+  }, []);
 
   const loadMovies = async () => {
     try {
@@ -392,6 +404,7 @@ export default function App() {
       setAdminToken(auth.token);
       await refreshAdminStats(auth.token);
       setView('admin');
+      setShowAdminLogin(false);
       setMessage('Admin portal yafunguwe neza.');
     } catch (error) {
       setAdminToken('');
@@ -406,6 +419,8 @@ export default function App() {
     setAdminOverview(defaultOverview);
     setAdminCredentials({ email: '', password: '' });
     setView('browse');
+    setShowAdminLogin(false);
+    window.location.hash = '';
     setMessage('Wasohotse muri admin portal.');
   };
 
@@ -492,30 +507,13 @@ export default function App() {
         </div>
 
         <div className="topbar-actions">
-          <div className="view-switch">
-            <button
-              className={view === 'browse' ? 'category-btn active' : 'category-btn'}
-              onClick={() => setView('browse')}
-            >
-              Movies at Home
-            </button>
-            <button
-              className={view === 'admin' ? 'category-btn active' : 'category-btn'}
-              onClick={() => setView('admin')}
-            >
-              Admin Portal
-            </button>
-          </div>
-          <button className="ghost-btn" onClick={() => void handleDemoUserLogin()}>
-            Demo User Login
-          </button>
         </div>
       </header>
 
-      <div className="status-banner">{apiStatus}</div>
+      {/* status banner hidden in production */}
 
       <main>
-        {view === 'browse' ? (
+        {view === 'browse' && !showAdminLogin ? (
           <>
             <section
               className="hero-card rt-hero hero-banner"
@@ -785,7 +783,7 @@ export default function App() {
               </div>
             ) : null}
           </>
-        ) : !adminToken ? (
+        ) : (showAdminLogin || view === 'admin') && !adminToken ? (
           <section className="private-admin-shell">
             <div className="admin-lock-card">
               <span className="pill">🔒 Private staff portal</span>
@@ -793,12 +791,6 @@ export default function App() {
               <p>
                 Injira ukoresheje email na password bya admin. Nta mibare cyangwa controls byerekana mbere yo kwemezwa.
               </p>
-
-              <div className="card-actions helper-actions">
-                <button className="ghost-btn small-btn" onClick={fillDemoAdminCredentials} type="button">
-                  Fill demo credentials
-                </button>
-              </div>
 
               <form className="form-grid" onSubmit={handleAdminLogin}>
                 <input
